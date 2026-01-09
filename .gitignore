@@ -1,0 +1,18 @@
+# *.js
+/dist
+!jest.config.js
+*.d.ts
+!src/connectLayers/connectModules/v3/types/*.d.ts
+
+# CDK asset staging directory
+.cdk.staging
+cdk.out
+
+# Context
+cdk.context.json
+/*/node_modules
+
+node_modules
+
+sandbox
+.env
