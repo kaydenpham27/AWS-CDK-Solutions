@@ -22,10 +22,8 @@
     "skipLibCheck": true,
     "types": ["node"],
     "typeRoots": ["./node_modules/@types"],
-    "rootDir": "./src",
+    "rootDir": "./",
     "baseUrl": "./",
     "outDir": "./dist"
   },
-  "include": ["src/**/*"],
-  "exclude": ["/node_modules", "/dist"]
 }
