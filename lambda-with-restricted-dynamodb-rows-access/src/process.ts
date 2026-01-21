@@ -1,4 +1,5 @@
 import { DynamoDBClient, QueryCommand } from "@aws-sdk/client-dynamodb";
+import { GetCallerIdentityCommand, STSClient } from "@aws-sdk/client-sts";
 
 type EventProps = {
   temporaryCredentials: {
@@ -12,10 +13,7 @@ type EventProps = {
 
 export const handler = async (e: EventProps) => {
   try {
-    console.log(`Event: ${JSON.stringify(e)}`);
     const { temporaryCredentials, data } = e;
-
-    console.log("Credentials", JSON.stringify(temporaryCredentials));
     if (
       temporaryCredentials.expiration &&
       new Date(temporaryCredentials.expiration).getTime() < new Date().getTime()
@@ -38,8 +36,6 @@ export const handler = async (e: EventProps) => {
     const client = new DynamoDBClient({
       credentials: credentialConfig,
     });
-    console.log("Initialised DynamoDB client successfully");
-
     const items = await client.send(
       new QueryCommand({
         TableName: process.env.tableName,
@@ -58,14 +54,12 @@ export const handler = async (e: EventProps) => {
         KeyConditionExpression: "#item = :pk AND begins_with(#subItem, :sk)",
       }),
     );
-
     console.log(
       `Received ${items.Count} items from table ${process.env.tableName}`,
     );
     for (const item of items.Items || []) {
       console.log(JSON.stringify(item));
     }
-
     return items;
   } catch (err) {
     console.log(

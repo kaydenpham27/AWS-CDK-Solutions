@@ -8,8 +8,7 @@ import path from "path";
 export class LambdaWithRestrictedDynamodbRowsAccessStack extends cdk.Stack {
   private inputFunc: lambda.Function;
   private processFunc: lambda.Function;
-  // Role to be assumed by processing func during execution
-  private processFuncAssumedRole: iam.Role;
+  private assumedRole: iam.Role;
   private table: dynamodb.TableV2;
 
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -24,14 +23,11 @@ export class LambdaWithRestrictedDynamodbRowsAccessStack extends cdk.Stack {
         name: "subItem",
         type: dynamodb.AttributeType.STRING,
       },
-      billing: dynamodb.Billing.onDemand({
-        // maxReadRequestUnits:
-        // maxWriteRequestUnits
-      }),
+      billing: dynamodb.Billing.onDemand({}),
     });
 
     this.inputFunc = new lambda.Function(this, `InputFunc`, {
-      description: `This is an input function with full permissions to DynamoDB table and permission to grant permission to ProcessFunc`,
+      description: `Entry point of the workflow. Processing input and granting restricted permissions to ProcessFunc`,
       code: lambda.Code.fromAsset(path.join(__dirname, "../dist")),
       runtime: lambda.Runtime.NODEJS_22_X,
       handler: `input.handler`,
@@ -42,7 +38,7 @@ export class LambdaWithRestrictedDynamodbRowsAccessStack extends cdk.Stack {
     });
 
     this.processFunc = new lambda.Function(this, `ProcessFunc`, {
-      description: `This is a processing function with read-restricted permissions to DynamoDB selected rows`,
+      description: `Processing the job with restricted permission enforced by the InputFunc`,
       code: lambda.Code.fromAsset(path.join(__dirname, "../dist")),
       runtime: lambda.Runtime.NODEJS_22_X,
       handler: `process.handler`,
@@ -52,58 +48,28 @@ export class LambdaWithRestrictedDynamodbRowsAccessStack extends cdk.Stack {
       },
     });
 
-    this.processFuncAssumedRole = new iam.Role(this, "Lambda-Assumed-Role", {
+    this.assumedRole = new iam.Role(this, "AssumedRole", {
       assumedBy: this.inputFunc.grantPrincipal,
-      description: `Temporary role for process function to assume`,
+      description: `Role with full DB permissions to be assumed by Input Func`,
       maxSessionDuration: cdk.Duration.minutes(60),
     });
-
-    // Allows input function to invoke process function
-    this.processFunc.grantInvoke(this.inputFunc);
-    // Grants the role to be assumed by process function all permissions for DynamoDB table
-    this.table.grantFullAccess(this.processFuncAssumedRole);
-
-    this.inputFunc.addEnvironment(
-      "assumedRoleArn",
-      this.processFuncAssumedRole.roleArn,
+    // Grant the assumed role full permissions to the table
+    this.table.grantFullAccess(this.assumedRole);
+    // Grant the Input Func permission to assume the above assumed role
+    this.inputFunc.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ["sts:AssumeRole"],
+        effect: iam.Effect.ALLOW,
+        resources: [this.assumedRole.roleArn],
+      }),
     );
+
+    this.processFunc.grantInvoke(this.inputFunc);
+    this.inputFunc.addEnvironment("assumedRoleArn", this.assumedRole.roleArn);
     this.inputFunc.addEnvironment("tableArn", this.table.tableArn);
     this.inputFunc.addEnvironment(
       "processFuncName",
       this.processFunc.functionName,
     );
-    this.inputFunc.addToRolePolicy(
-      new iam.PolicyStatement({
-        actions: ["sts:AssumeRole"],
-        effect: iam.Effect.ALLOW,
-        resources: [this.processFuncAssumedRole.roleArn],
-      }),
-    );
-
-    //? Permanent policy statement assigned to ProcessFunc
-    // this.processFunc.addToRolePolicy(
-    //   new iam.PolicyStatement({
-    //     actions: [
-    //       "dynamodb:GetItem",
-    //       "dynamodb:Query",
-    //       "dynamodb:BatchGetItem",
-    //     ],
-    //     resources: [this.table.tableArn],
-    //     conditions: {
-    //       "ForAllValues:StringEquals": {
-    //         // "dynamodb:LeadingKeys": ["ALLOWED_KEY"],
-    //         "dynamodb:Attributes": ["item", "subItem", "visibleAttribute"],
-    //       },
-    //       "StringEqualsIfExists": {
-    //         "dynamodb:Select": "SPECIFIC_ATTRIBUTES",
-    //         "dynamodb:ReturnValues":[
-    //               "NONE",
-    //               "UPDATED_OLD",
-    //               "UPDATED_NEW"
-    //            ]
-    //       }
-    //     },
-    //   }),
-    // );
   }
 }
