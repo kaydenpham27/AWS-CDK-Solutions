@@ -2,9 +2,9 @@
 
 ## Scenario
 
-Your workloads depend heavily on Lambda Functions as computing resources, and your architectures have now grown too large to easily `alt + tab` to monitor different functions simultaneously. Such a scenario is frustrating and indeed might reduce your attention due to context switching
+Your workloads depend heavily on Lambda Functions as computing resources, and your architectures have now grown too large to easily `alt + tab` to monitor different functions simultaneously. Such a scenario is frustrating and indeed might reduce your concentration due or get you hallucinated like AI to context switching
 
-## Solutions
+## Solution
 
 AWS Grafana is a great solution for this scenario. It's a fully managed service that allows you to build a centralised monitoring dashboard of your choice. The design depends on you, but I'll list some key metrics that one may include to achieve valuable insights from the data.
 
