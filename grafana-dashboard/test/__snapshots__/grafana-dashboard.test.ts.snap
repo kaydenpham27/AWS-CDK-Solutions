@@ -1,0 +1,174 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`GrafanaDashboardStack Stack synthesise matches the snapshot 1`] = `
+{
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "CfnAdminPermissionSet": {
+      "Properties": {
+        "InstanceArn": "arn:aws:sso:::instance/ssoins-1234567890abcdef",
+        "ManagedPolicies": [
+          "arn:aws:iam::aws:policy/AdministratorAccess",
+        ],
+        "Name": "Admin",
+      },
+      "Type": "AWS::SSO::PermissionSet",
+    },
+    "CfnDashboardWorkspace": {
+      "Properties": {
+        "AccountAccessType": "CURRENT_ACCOUNT",
+        "AuthenticationProviders": [
+          "AWS_SSO",
+        ],
+        "DataSources": [
+          "CLOUDWATCH",
+          "PROMETHEUS",
+          "XRAY",
+          "ATHENA",
+        ],
+        "Description": "Dashboard to visualise, monitor and analyse AWS CloudWatch logs",
+        "GrafanaVersion": "10.4",
+        "PermissionType": "CUSTOMER_MANAGED",
+        "RoleArn": {
+          "Fn::GetAtt": [
+            "GrafanaDashboardRole4BA8D04C",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Grafana::Workspace",
+    },
+    "GrafanaDashboardRole4BA8D04C": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "grafana.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Description": "This role grants grafana dashboard permissions to access to-be-monitored resources",
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AmazonGrafanaCloudWatchAccess",
+              ],
+            ],
+          },
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/AmazonPrometheusFullAccess",
+              ],
+            ],
+          },
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/AWSXrayFullAccess",
+              ],
+            ],
+          },
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/AmazonAthenaFullAccess",
+              ],
+            ],
+          },
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/AmazonSNSFullAccess",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "PermissionsSetAssignment": {
+      "Properties": {
+        "InstanceArn": "arn:aws:sso:::instance/ssoins-1234567890abcdef",
+        "PermissionSetArn": {
+          "Fn::GetAtt": [
+            "CfnAdminPermissionSet",
+            "PermissionSetArn",
+          ],
+        },
+        "PrincipalId": "group-1234567890abcdef",
+        "PrincipalType": "GROUP",
+        "TargetId": {
+          "Ref": "AWS::AccountId",
+        },
+        "TargetType": "AWS_ACCOUNT",
+      },
+      "Type": "AWS::SSO::Assignment",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
