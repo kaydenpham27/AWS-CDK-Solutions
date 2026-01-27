@@ -251,4 +251,10 @@ describe("GrafanaDashboardStack", () => {
       expect(stackWithoutContext).toThrow();
     });
   });
+
+  describe("Stack synthesised template", () => {
+    test("matches the snapshot", () => {
+      expect(template.toJSON()).toMatchSnapshot();
+    });
+  });
 });
