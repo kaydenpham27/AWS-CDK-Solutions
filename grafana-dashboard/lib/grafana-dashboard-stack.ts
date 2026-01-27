@@ -12,6 +12,11 @@ export class GrafanaDashboardStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
+    if (!this.node.tryGetContext("IAM_IDENTITY_CENTER_INSTANCE_ARN"))
+      throw new Error("IAM_IDENTITY_CENTER_INSTANCE_ARN context is missing");
+    if (!this.node.tryGetContext("IAM_IDENTITY_CENTER_GROUP_ID"))
+      throw new Error("IAM_IDENTITY_CENTER_GROUP_ID context is missing");
+
     // NOTE: Use this when choosing CUSTOMER_MANAGED as permission type
     this.dashboardRole = new iam.Role(this, "GrafanaDashboardRole", {
       assumedBy: iam.ServicePrincipal.fromStaticServicePrincipleName(
@@ -22,6 +27,11 @@ export class GrafanaDashboardStack extends cdk.Stack {
         iam.ManagedPolicy.fromAwsManagedPolicyName(
           "service-role/AmazonGrafanaCloudWatchAccess",
         ),
+        iam.ManagedPolicy.fromAwsManagedPolicyName(
+          "AmazonPrometheusFullAccess",
+        ),
+        iam.ManagedPolicy.fromAwsManagedPolicyName("AWSXrayFullAccess"),
+        iam.ManagedPolicy.fromAwsManagedPolicyName("AmazonAthenaFullAccess"),
         iam.ManagedPolicy.fromAwsManagedPolicyName("AmazonSNSFullAccess"),
       ],
     });
@@ -33,8 +43,8 @@ export class GrafanaDashboardStack extends cdk.Stack {
         description: `Dashboard to visualise, monitor and analyse AWS CloudWatch logs`,
         accountAccessType: "CURRENT_ACCOUNT",
         authenticationProviders: ["AWS_SSO"],
-        permissionType: "SERVICE_MANAGED",
-        // roleArn: this.dashboardRole.roleArn,
+        permissionType: "CUSTOMER_MANAGED",
+        roleArn: this.dashboardRole.roleArn,
         grafanaVersion: "10.4",
         dataSources: ["CLOUDWATCH", "PROMETHEUS", "XRAY", "ATHENA"],
       },
