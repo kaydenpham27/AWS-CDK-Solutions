@@ -12,6 +12,7 @@ export class GrafanaDashboardStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
+    // NOTE: Use this when choosing CUSTOMER_MANAGED as permission type
     this.dashboardRole = new iam.Role(this, "GrafanaDashboardRole", {
       assumedBy: iam.ServicePrincipal.fromStaticServicePrincipleName(
         "grafana.amazonaws.com",
@@ -33,12 +34,13 @@ export class GrafanaDashboardStack extends cdk.Stack {
         accountAccessType: "CURRENT_ACCOUNT",
         authenticationProviders: ["AWS_SSO"],
         permissionType: "SERVICE_MANAGED",
-        roleArn: this.dashboardRole.roleArn,
+        // roleArn: this.dashboardRole.roleArn,
         grafanaVersion: "10.4",
         dataSources: ["CLOUDWATCH", "PROMETHEUS", "XRAY", "ATHENA"],
       },
     );
 
+    // Permission set to be granted to an USER or a GROUP in IAM Identity Center (IAM SSO)
     this.cfnAdminPermissionSet = new sso.CfnPermissionSet(
       this,
       "CfnAdminPermissionSet",
@@ -51,6 +53,7 @@ export class GrafanaDashboardStack extends cdk.Stack {
       },
     );
 
+    // Granting the permission set to a GROUP
     const permissionsSetAssignment = new sso.CfnAssignment(
       this,
       "PermissionsSetAssignment",
